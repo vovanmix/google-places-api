@@ -3,6 +3,10 @@ namespace Vovanmix\GoogleApi;
 
 use GuzzleHttp\Client;
 use Vovanmix\GoogleApi\Exceptions\GooglePlacesApiException;
+use Vovanmix\GoogleApi\Models\Photo;
+use Vovanmix\GoogleApi\Models\Place;
+use Illuminate\Database\Eloquent\Collection;
+use Vovanmix\GoogleApi\Models\Review;
 
 class PlacesApi
 {
@@ -17,6 +21,8 @@ class PlacesApi
     const PLACE_AUTOCOMPLETE_URL = 'autocomplete/json';
 
     const QUERY_AUTOCOMPLETE_URL = 'queryautocomplete/json';
+
+    const PHOTO_DETAILS_URL = 'photo';
 
     /**
      * @var
@@ -129,6 +135,28 @@ class PlacesApi
     }
 
     /**
+     * Get Photo Url
+     *
+     * @param string $photoReference
+     * @param null | integer $maxWidth
+     * @param null | integer $maxHeight
+     * @return mixed
+     * @throws GooglePlacesApiException
+     */
+    public function photoUrl($photoReference, $maxWidth = null, $maxHeight = null)
+    {
+        $this->checkKey();
+
+        $params['photo_reference'] = $photoReference;
+        $params['maxheight'] = $maxHeight;
+        $params['maxwidth'] = $maxWidth;
+
+        $request = $this->getRequest(self::PHOTO_DETAILS_URL, $params);
+
+        return $request->getUrl();
+    }
+
+    /**
      * Place AutoComplete Request to google places api.
      *
      * @param $input
@@ -167,6 +195,20 @@ class PlacesApi
         return $this->convertToCollection($response, 'predictions');
     }
 
+    private function getRequest($uri, $params){
+        $options = [
+            'query' => [
+                'key' => $this->key,
+            ],
+        ];
+
+        $options['query'] = array_merge($options['query'], $params);
+
+        $request = $this->client->get($uri, $options);
+
+        return $request;
+    }
+
     /**
      * @param $uri
      * @param $params
@@ -176,16 +218,10 @@ class PlacesApi
      */
     private function makeRequest($uri, $params)
     {
-        $options = [
-            'query' => [
-                'key' => $this->key,
-            ],
-        ];
 
-        $options['query'] = array_merge($options['query'], $params);
+        $request = $this->getRequest($uri, $params);
 
-        $response = json_decode($this->client->get($uri, $options)
-                                             ->getBody()->getContents(), true);
+        $response = json_decode($request->getBody()->getContents(), true);
 
         $this->setStatus($response['status']);
 
@@ -195,6 +231,84 @@ class PlacesApi
         }
 
         return $response;
+    }
+
+    private function convertDetails(array $data, $index = null){
+        $data = collect($data);
+
+        $result = $data->get('result');
+
+        $place = new Place();
+
+        $place->id = @$result['place_id'];
+        $place->name = @$result['name'];
+        $place->address = @$result['formatted_address'];
+        $place->phone = @$result['formatted_phone_number'];
+        $place->website = @$result['website'];
+        $place->google_url = @$result['url'];
+        $place->price_level = @$result['price_level'];
+        $place->rating = @$result['rating'];
+        $place->ratings_count = @$result['user_ratings_total'];
+
+        //todo: premium data
+        //aspects
+        $place->description = @$result['review_summary'];
+
+        $place->open_now_hours = '';
+        $place->opening_hours = '';
+        $place->open_now = false;
+        if (!empty($result['opening_hours'])) {
+            $place->opening_hours = @$result['opening_hours']['weekday_text'];
+            $place->open_now = (bool)$result['opening_hours']['open_now'];
+            $week_day = date("w");
+            if (!empty($result['opening_hours']['weekday_text'][$week_day])) {
+                $place->open_now_hours = explode(': ', $result['opening_hours']['weekday_text'][$week_day])[1];
+            }
+        }
+
+        $place->geometry = @$result['geometry'];
+        $place->address_components = @$result['address_components'];
+
+        //process photos
+        $place->photos = new Collection();
+
+        if(!empty($result['photos'])) {
+            foreach ($result['photos'] as $photoInfo) {
+                $photo = new Photo();
+
+                $reference = $photoInfo['photo_reference'];
+
+                //todo: get image sizes from config
+                //todo: define properties in the model
+
+                $photo->max_height = @$photoInfo['height'];
+                $photo->max_width = @$photoInfo['width'];
+                $photo->thumbnail_url = $this->photoUrl($reference, '', '');
+                $photo->big_url = $this->photoUrl($reference, '', '');
+            }
+        }
+
+
+        //process reviews
+        $place->reviews = new Collection();
+
+        if(!empty($result['reviews'])) {
+            foreach ($result['reviews'] as $reviewInfo) {
+
+                $review = new Review();
+
+                $review->author_name = $reviewInfo['author_name'];
+                $review->profile_photo_url = @$reviewInfo['profile_photo_url'];
+                $review->text = $reviewInfo['text'];
+                $review->rating = @$reviewInfo['rating'];
+                $review->time = Carbon::createFromTimestamp(@$reviewInfo['time']);
+                $review->aspects = @$reviewInfo['aspects'];
+
+                $place->reviews->add($review);
+            }
+        }
+
+        return $place;
     }
 
     /**
@@ -239,6 +353,7 @@ class PlacesApi
 
     /**
      * @param null $key
+     * @return $this
      */
     public function setKey($key)
     {
@@ -265,6 +380,7 @@ class PlacesApi
      * @param $params
      *
      * @throws \Vovanmix\GoogleApi\Exceptions\GooglePlacesApiException
+     * @return mixed
      */
     private function prepareNearbySearchParams($location, $radius, $params)
     {
