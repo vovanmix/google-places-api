@@ -14,7 +14,7 @@ With just 2 lines of code you can request to any google places api feature. No n
 # Installation
 Install it with composer
 ```
-composer requrire skagarwal/google-places-api
+composer require vovanmix/google-places-api
 ```
 
 
@@ -25,7 +25,7 @@ composer requrire skagarwal/google-places-api
 
 ## Step 1 - Import the class using namespace
 ```php
-use SKAgarwal\GoogleApi\PlacesApi;
+use Vovanmix\GoogleApi\PlacesApi;
 ```
 
 ## Step 2 - Initiate the object
@@ -45,7 +45,7 @@ As mentioned earlier just 2 lines of code to make any request.
 
 **Full example:**
 ```php
-use SKAgarwal\GoogleApi\PlacesApi;
+use Vovanmix\GoogleApi\PlacesApi;
 
 
 function () {
@@ -66,13 +66,13 @@ Set up the service provider and facade in the **config\app.php**
 'providers' => [
 ....
 ....
-SKAgarwal\GoogleApi\ServiceProvider::class,
+Vovanmix\GoogleApi\ServiceProvider::class,
 ];
 
 'aliases' => [
 ....
 ....
-'GooglePlaces' => SKAgarwal\GoogleApi\Facade::class,
+'GooglePlaces' => Vovanmix\GoogleApi\Facade::class,
 ];
 
 ```
@@ -80,7 +80,7 @@ SKAgarwal\GoogleApi\ServiceProvider::class,
 ## Step 2
 publish the config file with following artisan command
 ```
-php artisan vendor:publish --provider=SKAgarwal\GoogleApi\ServiceProvider
+php artisan vendor:publish --provider="Vovanmix\GoogleApi\ServiceProvider"
 ```
 
 This will create **google.php** file in the config directory.

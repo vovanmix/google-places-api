@@ -1,5 +1,5 @@
 <?php
-namespace SKAgarwal\GoogleApi;
+namespace Vovanmix\GoogleApi;
 
 use Illuminate\Support\Facades\Facade as BaseFacade;
 

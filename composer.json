@@ -1,5 +1,5 @@
 {
-    "name": "skagarwal/google-places-api",
+    "name": "Vovanmix/google-places-api",
     "description": "Google Places Api",
     "type": "library",
     "keywords": [
@@ -25,7 +25,7 @@
     },
     "require-dev": {
         "phpunit/phpunit": "~4.0",
-        "skagarwal/reflection": "~1.0"
+        "Vovanmix/reflection": "~1.0"
     },
     "autoload": {
         "files": [
@@ -33,7 +33,7 @@
         ],
 
         "psr-4": {
-            "SKAgarwal\\GoogleApi\\": "src/"
+            "Vovanmix\\GoogleApi\\": "src/"
         }
     }
 }
