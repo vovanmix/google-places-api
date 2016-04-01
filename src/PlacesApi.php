@@ -280,6 +280,11 @@ class PlacesApi
 
                 //todo: get image sizes from config
                 //todo: define properties in the model
+                //todo: create new converters
+                //todo: find
+                //todo: autocomplete
+                //todo: call correct converters
+
 
                 $photo->max_height = @$photoInfo['height'];
                 $photo->max_width = @$photoInfo['width'];
