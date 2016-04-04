@@ -64,7 +64,7 @@ class PlacesApi
      * @param null $radius
      * @param array $params
      *
-     * @return \Illuminate\Support\Collection
+     * @return Collection | PlacePreview[]
      * @throws \Vovanmix\GoogleApi\Exceptions\GooglePlacesApiException
      */
     public function nearbySearch($location, $radius = null, $params = [])
@@ -89,7 +89,7 @@ class PlacesApi
      * @param $query
      * @param array $params
      *
-     * @return \Illuminate\Support\Collection
+     * @return Collection | PlacePreview[]
      * @throws \Vovanmix\GoogleApi\Exceptions\GooglePlacesApiException
      */
     public function textSearch($query, $params = [])
@@ -117,7 +117,7 @@ class PlacesApi
      * @param $radius
      * @param $params
      *
-     * @return \Illuminate\Support\Collection
+     * @return Collection | PlacePreview[]
      * @throws \Vovanmix\GoogleApi\Exceptions\GooglePlacesApiException
      */
     public function radarSearch($location, $radius, array $params)
@@ -144,7 +144,7 @@ class PlacesApi
      * @param $placeId
      * @param array $params
      *
-     * @return \Illuminate\Support\Collection
+     * @return Place
      * @throws \Vovanmix\GoogleApi\Exceptions\GooglePlacesApiException
      */
     public function placeDetails($placeId, $params = [])
@@ -171,7 +171,7 @@ class PlacesApi
      * @param $input
      * @param array $params
      *
-     * @return \Illuminate\Support\Collection
+     * @return Collection | Prediction[]
      */
     public function placeAutocomplete($input, $params = [])
     {
@@ -197,7 +197,7 @@ class PlacesApi
      * @param $input
      * @param array $params
      *
-     * @return \Illuminate\Support\Collection
+     * @return Collection | Prediction[]
      * @throws \Vovanmix\GoogleApi\Exceptions\GooglePlacesApiException
      */
     public function queryAutocomplete($input, $params = [])
@@ -281,7 +281,7 @@ class PlacesApi
 
     /**
      * @param array $raw_data
-     * @return Collection
+     * @return Collection | Prediction[]
      */
     private function convertPredictions(array $raw_data){
         /** @var \Illuminate\Support\Collection $data */
@@ -306,7 +306,7 @@ class PlacesApi
 
     /**
      * @param array $raw_data
-     * @return Collection
+     * @return Collection | PlacePreview[]
      */
     private function convertPlacesCollection(array $raw_data){
         /** @var \Illuminate\Support\Collection $data */
