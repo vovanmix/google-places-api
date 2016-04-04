@@ -1,6 +1,7 @@
 <?php
 namespace Vovanmix\GoogleApi;
 
+use Carbon\Carbon;
 use GuzzleHttp\Client;
 use Vovanmix\GoogleApi\Exceptions\GooglePlacesApiException;
 use Vovanmix\GoogleApi\Models\Photo;
@@ -131,7 +132,7 @@ class PlacesApi
 
         $response = $this->makeRequest(self::DETAILS_SEARCH_URL, $params);
 
-        return $this->convertToCollection($response);
+        return $this->convertDetails($response);
     }
 
     /**
@@ -151,9 +152,10 @@ class PlacesApi
         $params['maxheight'] = $maxHeight;
         $params['maxwidth'] = $maxWidth;
 
+        /** @var \GuzzleHttp\Psr7\Request $request */
         $request = $this->getRequest(self::PHOTO_DETAILS_URL, $params);
 
-        return $request->getUrl();
+        return $request->getUri();
     }
 
     /**
@@ -233,8 +235,9 @@ class PlacesApi
         return $response;
     }
 
-    private function convertDetails(array $data, $index = null){
-        $data = collect($data);
+    private function convertDetails(array $raw_data){
+        /** @var \Illuminate\Support\Collection $data */
+        $data = collect($raw_data);
 
         $result = $data->get('result');
 
@@ -278,8 +281,6 @@ class PlacesApi
 
                 $reference = $photoInfo['photo_reference'];
 
-                //todo: get image sizes from config
-                //todo: define properties in the model
                 //todo: create new converters
                 //todo: find
                 //todo: autocomplete
@@ -288,8 +289,10 @@ class PlacesApi
 
                 $photo->max_height = @$photoInfo['height'];
                 $photo->max_width = @$photoInfo['width'];
-                $photo->thumbnail_url = $this->photoUrl($reference, '', '');
-                $photo->big_url = $this->photoUrl($reference, '', '');
+                $photo->thumbnail_url = $this->photoUrl($reference, config('google.places.image_thumbnail_width'), config('google.places.image_thumbnail_height'));
+                $photo->big_url = $this->photoUrl($reference, config('google.places.image_big_width'), config('google.places.image_big_height'));
+
+                $place->photos->add($photo);
             }
         }
 
@@ -318,7 +321,7 @@ class PlacesApi
 
     /**
      * @param array $data
-     *
+     * @param null $index
      * @return \Illuminate\Support\Collection
      */
     private function convertToCollection(array $data, $index = null)
