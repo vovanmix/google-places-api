@@ -1,29 +1,33 @@
 <?php
 namespace Vovanmix\GoogleApi\Models;
+use Illuminate\Support\Collection;
 
 /**
  * Class Place
  * @package Vovanmix\GoogleApi\Models
  *
- * @property string $id
- * @property string $name
- * @property string $address
- * @property string $description
- * @property string $phone
- * @property string $website
- * @property string $google_url
- * @property string $price_level
- * @property string $rating
- * @property string $ratings_count
- * @property boolean $open_now
- * @property string $open_now_hours
- * @property array $opening_hours
- * @property array $address_components
- * @property array $geometry
- * @property array $icon
- * @property Review[] $reviews
- * @property Photo $photos
  */
 class Place {
+    
+    public $id = '';
+    public $name = '';
+    public $address = '';
+    public $description = '';
+    public $phone = '';
+    public $website = '';
+    public $google_url = '';
+    public $price_level = '';
+    public $rating = 0;
+    public $ratings_count = 0;
+    public $open_now = false;
+    public $open_now_hours = '';
+    public $opening_hours = '';
+    public $address_components = [];
+    public $geometry = [];
+    public $icon = '';
+    /** @var Review[] | Collection */
+    public $reviews;
+    /** @var Photo[] | Collection */
+    public $photos;
     
 }

@@ -4,14 +4,14 @@ namespace Vovanmix\GoogleApi\Models;
 /**
  * Class Photo
  * @package Vovanmix\GoogleApi\Models
- *
- * @property int $max_height
- * @property int $max_width
- * @property string $thumbnail_url
- * @property string $big_url
  * 
  */
-class Photo
-{
+class Photo {
 
+    public $id = '';
+    public $max_height = 0;
+    public $max_width = 0;
+    public $thumbnail_url = '';
+    public $big_url = '';
+    
 }

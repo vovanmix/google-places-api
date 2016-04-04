@@ -388,12 +388,7 @@ class PlacesApi
 
                 $reference = $photoInfo['photo_reference'];
 
-                //todo: create new converters
-                //todo: find
-                //todo: autocomplete
-                //todo: call correct converters
-
-
+                $photo->id = $reference;
                 $photo->max_height = @$photoInfo['height'];
                 $photo->max_width = @$photoInfo['width'];
                 $photo->thumbnail_url = $this->photoUrl($reference, config('google.places.image_thumbnail_width'), config('google.places.image_thumbnail_height'));
@@ -417,6 +412,8 @@ class PlacesApi
                 $review->rating = @$reviewInfo['rating'];
                 $review->time = Carbon::createFromTimestamp(@$reviewInfo['time']);
                 $review->aspects = @$reviewInfo['aspects'];
+                $review->language = @$reviewInfo['language'];
+                $review->id = md5(json_encode([$review->time, $review->author_name, $review->language]));
 
                 $place->reviews->add($review);
             }
