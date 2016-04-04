@@ -1,5 +1,5 @@
 {
-    "name": "Vovanmix/google-places-api",
+    "name": "vovanmix/google-places-api",
     "description": "Google Places Api",
     "type": "library",
     "keywords": [
@@ -9,9 +9,13 @@
         "Google Places Api",
         "Google Api"
     ],
-    "time": "2016-02-05",
+    "time": "2016-04-04",
     "license": "MIT",
     "authors": [
+        {
+            "name": "Vladimir Mikhaylovskiy",
+            "email": "singingcode@gmail.com"
+        },
         {
             "name": "Sachin Agarwal",
             "email": "sachinkumaragarwal05@gmail.com"

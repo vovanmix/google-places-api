@@ -1,3 +1,8 @@
+# This fork
+This is a fork of https://github.com/SachinAgarwal1337/google-places-api.
+
+I added model classes for results, API to retrieve photos, and caching.
+
 # Google Places APi.
 
 This is a PHP wrapper for **Google Places Api Web Service**. And is [Laravel Framework](https://laravel.com/docs/5.2) friendly.
