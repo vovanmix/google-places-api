@@ -28,6 +28,8 @@ class PlacesApi
 
     const PHOTO_DETAILS_URL = 'photo';
 
+    const BASE_URL = 'https://maps.googleapis.com/maps/api/place/';
+
     /**
      * @var
      */
@@ -53,7 +55,7 @@ class PlacesApi
         $this->key = $key;
 
         $this->client = new Client([
-            'base_uri' => 'https://maps.googleapis.com/maps/api/place/',
+            'base_uri' => self::BASE_URL,
         ]);
     }
 
@@ -224,7 +226,7 @@ class PlacesApi
      * @param string $photoReference
      * @param null | integer $maxWidth
      * @param null | integer $maxHeight
-     * @return mixed
+     * @return string
      * @throws GooglePlacesApiException
      */
     public function photoUrl($photoReference, $maxWidth = null, $maxHeight = null)
@@ -235,13 +237,18 @@ class PlacesApi
         $params['maxheight'] = $maxHeight;
         $params['maxwidth'] = $maxWidth;
 
-        /** @var \GuzzleHttp\Psr7\Request $request */
-        $request = $this->getRequest(self::PHOTO_DETAILS_URL, $params);
+        $options = $this->buildRequestParameters($params);
 
-        return $request->getUri();
+        $url = self::BASE_URL . self::PHOTO_DETAILS_URL . '?' . \GuzzleHttp\Psr7\build_query($options['query']);
+
+        return $url;
     }
 
-    private function getRequest($uri, $params){
+    /**
+     * @param $params
+     * @return array
+     */
+    private function buildRequestParameters($params){
         $options = [
             'query' => [
                 'key' => $this->key,
@@ -250,9 +257,7 @@ class PlacesApi
 
         $options['query'] = array_merge($options['query'], $params);
 
-        $request = $this->client->get($uri, $options);
-
-        return $request;
+        return $options;
     }
 
     /**
@@ -265,9 +270,9 @@ class PlacesApi
     private function makeRequest($uri, $params)
     {
 
-        $request = $this->getRequest($uri, $params);
+        $options = $this->buildRequestParameters($params);
 
-        $response = json_decode($request->getBody()->getContents(), true);
+        $response = json_decode($this->client->get($uri, $options)->getBody()->getContents(), true);
 
         $this->setStatus($response['status']);
 
