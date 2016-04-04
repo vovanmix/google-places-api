@@ -3,6 +3,7 @@ namespace Vovanmix\GoogleApi;
 
 use Carbon\Carbon;
 use GuzzleHttp\Client;
+use GuzzleHttp\TransferStats;
 use Vovanmix\GoogleApi\Exceptions\GooglePlacesApiException;
 use Vovanmix\GoogleApi\Models\Photo;
 use Vovanmix\GoogleApi\Models\Place;
@@ -109,7 +110,7 @@ class PlacesApi
         });
 
         return $value;
-        
+
     }
 
     /**
@@ -233,15 +234,26 @@ class PlacesApi
     {
         $this->checkKey();
 
-        $params['photo_reference'] = $photoReference;
-        $params['maxheight'] = $maxHeight;
-        $params['maxwidth'] = $maxWidth;
+        $cache_key = 'places.photo_url.' . md5(json_encode([$photoReference, $maxWidth, $maxHeight]));
 
-        $options = $this->buildRequestParameters($params);
+        $value = Cache::remember($cache_key, config('google.places.cache_period'), function() use ($photoReference, $maxWidth, $maxHeight) {
 
-        $url = self::BASE_URL . self::PHOTO_DETAILS_URL . '?' . \GuzzleHttp\Psr7\build_query($options['query']);
+            $params['photo_reference'] = $photoReference;
+            $params['maxheight'] = $maxHeight;
+            $params['maxwidth'] = $maxWidth;
 
-        return $url;
+            $options = $this->buildRequestParameters($params);
+
+            $options['on_stats'] = function (TransferStats $stats) use (&$url) {
+                $url = $stats->getEffectiveUri();
+            };
+
+            $this->client->get(self::PHOTO_DETAILS_URL, $options);
+
+            return (string)$url;
+        });
+
+        return $value;
     }
 
     /**
