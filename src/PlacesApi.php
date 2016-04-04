@@ -7,6 +7,8 @@ use Vovanmix\GoogleApi\Exceptions\GooglePlacesApiException;
 use Vovanmix\GoogleApi\Models\Photo;
 use Vovanmix\GoogleApi\Models\Place;
 use Illuminate\Database\Eloquent\Collection;
+use Vovanmix\GoogleApi\Models\PlacePreview;
+use Vovanmix\GoogleApi\Models\Prediction;
 use Vovanmix\GoogleApi\Models\Review;
 
 class PlacesApi
@@ -71,7 +73,7 @@ class PlacesApi
         $params = $this->prepareNearbySearchParams($location, $radius, $params);
         $response = $this->makeRequest(self::NEARBY_SEARCH_URL, $params);
 
-        return $this->convertToCollection($response, 'results');
+        return $this->convertPlacesCollection($response);
     }
 
     /**
@@ -90,7 +92,7 @@ class PlacesApi
         $params['query'] = $query;
         $response = $this->makeRequest(self::TEXT_SEARCH_URL, $params);
 
-        return $this->convertToCollection($response, 'results');
+        return $this->convertPlacesCollection($response);
         
     }
 
@@ -112,7 +114,7 @@ class PlacesApi
 
         $response = $this->makeRequest(self::RADAR_SEARCH_URL, $params);
 
-        return $this->convertToCollection($response, 'results');
+        return $this->convertPlacesCollection($response);
     }
 
     /**
@@ -174,7 +176,7 @@ class PlacesApi
 
         $response = $this->makeRequest(self::PLACE_AUTOCOMPLETE_URL, $params);
 
-        return $this->convertToCollection($response, 'predictions');
+        return $this->convertPredictions($response);
     }
 
     /**
@@ -194,7 +196,7 @@ class PlacesApi
 
         $response = $this->makeRequest(self::QUERY_AUTOCOMPLETE_URL, $params);
 
-        return $this->convertToCollection($response, 'predictions');
+        return $this->convertPredictions($response);
     }
 
     private function getRequest($uri, $params){
@@ -235,6 +237,69 @@ class PlacesApi
         return $response;
     }
 
+    /**
+     * @param array $raw_data
+     * @return Collection
+     */
+    private function convertPredictions(array $raw_data){
+        /** @var \Illuminate\Support\Collection $data */
+        $data = collect($raw_data);
+
+        $result = $data->get('predictions');
+
+        $predictions = new Collection();
+
+        foreach($result as $result_item) {
+            $prediction = new Prediction();
+
+            $prediction->id = $result_item['id'];
+            $prediction->description = @$result_item['description'];
+            $prediction->place_id = @$result_item['place_id'];
+
+            $predictions->add($prediction);
+        }
+
+        return $predictions;
+    }
+
+    /**
+     * @param array $raw_data
+     * @return Collection
+     */
+    private function convertPlacesCollection(array $raw_data){
+        /** @var \Illuminate\Support\Collection $data */
+        $data = collect($raw_data);
+
+        $result = $data->get('results');
+
+        $results = new Collection();
+
+        foreach($result as $result_item) {
+            $place = new PlacePreview();
+
+            $place->id = @$result_item['place_id'];
+            $place->name = @$result_item['name'];
+            $place->price_level = @$result_item['price_level'];
+            $place->rating = @$result_item['rating'];
+            $place->address = @$result_item['formatted_address'];
+            if(!empty($result_item['geometry'])) {
+                $place->lat = @$result_item['geometry']['location']['lat'];
+                $place->lng = @$result_item['geometry']['location']['lng'];
+            }
+            if(!empty($result_item['opening_hours'])) {
+                $place->open_now = (bool)$result_item['opening_hours']['open_now'];
+            }
+
+            $results->add($place);
+        }
+
+        return $results;
+    }
+
+    /**
+     * @param array $raw_data
+     * @return Place
+     */
     private function convertDetails(array $raw_data){
         /** @var \Illuminate\Support\Collection $data */
         $data = collect($raw_data);
@@ -295,7 +360,6 @@ class PlacesApi
                 $place->photos->add($photo);
             }
         }
-
 
         //process reviews
         $place->reviews = new Collection();
