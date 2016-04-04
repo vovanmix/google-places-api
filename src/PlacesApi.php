@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Vovanmix\GoogleApi\Models\PlacePreview;
 use Vovanmix\GoogleApi\Models\Prediction;
 use Vovanmix\GoogleApi\Models\Review;
+use Cache;
 
 class PlacesApi
 {
@@ -70,10 +71,16 @@ class PlacesApi
     {
         $this->checkKey();
 
-        $params = $this->prepareNearbySearchParams($location, $radius, $params);
-        $response = $this->makeRequest(self::NEARBY_SEARCH_URL, $params);
+        $cache_key = 'places.nearby_search.' . md5(json_encode([$location, $radius, $params]));
 
-        return $this->convertPlacesCollection($response);
+        $value = Cache::remember($cache_key, config('google.places.cache_period'), function() use ($location, $radius, $params) {
+            $params = $this->prepareNearbySearchParams($location, $radius, $params);
+            $response = $this->makeRequest(self::NEARBY_SEARCH_URL, $params);
+
+            return $this->convertPlacesCollection($response);
+        });
+
+        return $value;
     }
 
     /**
@@ -89,10 +96,17 @@ class PlacesApi
     {
         $this->checkKey();
 
-        $params['query'] = $query;
-        $response = $this->makeRequest(self::TEXT_SEARCH_URL, $params);
+        $cache_key = 'places.text_search.' . md5(json_encode([$query, $params]));
 
-        return $this->convertPlacesCollection($response);
+        $value = Cache::remember($cache_key, config('google.places.cache_period'), function() use ($query, $params) {
+
+            $params['query'] = $query;
+            $response = $this->makeRequest(self::TEXT_SEARCH_URL, $params);
+
+            return $this->convertPlacesCollection($response);
+        });
+
+        return $value;
         
     }
 
@@ -110,11 +124,18 @@ class PlacesApi
     {
         $this->checkKey();
 
-        $params = $this->prepareRadarSearchParams($location, $radius, $params);
+        $cache_key = 'places.radar_search.' . md5(json_encode([$location, $radius, $params]));
 
-        $response = $this->makeRequest(self::RADAR_SEARCH_URL, $params);
+        $value = Cache::remember($cache_key, config('google.places.cache_period'), function() use ($location, $radius, $params) {
 
-        return $this->convertPlacesCollection($response);
+            $params = $this->prepareRadarSearchParams($location, $radius, $params);
+
+            $response = $this->makeRequest(self::RADAR_SEARCH_URL, $params);
+
+            return $this->convertPlacesCollection($response);
+        });
+
+        return $value;
     }
 
     /**
@@ -130,11 +151,71 @@ class PlacesApi
     {
         $this->checkKey();
 
-        $params['placeid'] = $placeId;
+        $cache_key = 'places.place_details.' . md5(json_encode([$placeId, $params]));
 
-        $response = $this->makeRequest(self::DETAILS_SEARCH_URL, $params);
+        $value = Cache::remember($cache_key, config('google.places.cache_period'), function() use ($placeId, $params) {
 
-        return $this->convertDetails($response);
+            $params['placeid'] = $placeId;
+
+            $response = $this->makeRequest(self::DETAILS_SEARCH_URL, $params);
+
+            return $this->convertDetails($response);
+        });
+
+        return $value;
+    }
+
+    /**
+     * Place AutoComplete Request to google places api.
+     *
+     * @param $input
+     * @param array $params
+     *
+     * @return \Illuminate\Support\Collection
+     */
+    public function placeAutocomplete($input, $params = [])
+    {
+        $this->checkKey();
+
+        $cache_key = 'places.place_autocomplete.' . md5(json_encode([$input, $params]));
+
+        $value = Cache::remember($cache_key, config('google.places.cache_period'), function() use ($input, $params) {
+
+            $params['input'] = $input;
+
+            $response = $this->makeRequest(self::PLACE_AUTOCOMPLETE_URL, $params);
+
+            return $this->convertPredictions($response);
+        });
+
+        return $value;
+    }
+
+    /**
+     * Query AutoComplete Request to the google api.
+     *
+     * @param $input
+     * @param array $params
+     *
+     * @return \Illuminate\Support\Collection
+     * @throws \Vovanmix\GoogleApi\Exceptions\GooglePlacesApiException
+     */
+    public function queryAutocomplete($input, $params = [])
+    {
+        $this->checkKey();
+
+        $cache_key = 'places.query_autocomplete.' . md5(json_encode([$input, $params]));
+
+        $value = Cache::remember($cache_key, config('google.places.cache_period'), function() use ($input, $params) {
+
+            $params['input'] = $input;
+
+            $response = $this->makeRequest(self::QUERY_AUTOCOMPLETE_URL, $params);
+
+            return $this->convertPredictions($response);
+        });
+
+        return $value;
     }
 
     /**
@@ -158,45 +239,6 @@ class PlacesApi
         $request = $this->getRequest(self::PHOTO_DETAILS_URL, $params);
 
         return $request->getUri();
-    }
-
-    /**
-     * Place AutoComplete Request to google places api.
-     *
-     * @param $input
-     * @param array $params
-     *
-     * @return \Illuminate\Support\Collection
-     */
-    public function placeAutocomplete($input, $params = [])
-    {
-        $this->checkKey();
-
-        $params['input'] = $input;
-
-        $response = $this->makeRequest(self::PLACE_AUTOCOMPLETE_URL, $params);
-
-        return $this->convertPredictions($response);
-    }
-
-    /**
-     * Query AutoComplete Request to the google api.
-     *
-     * @param $input
-     * @param array $params
-     *
-     * @return \Illuminate\Support\Collection
-     * @throws \Vovanmix\GoogleApi\Exceptions\GooglePlacesApiException
-     */
-    public function queryAutocomplete($input, $params = [])
-    {
-        $this->checkKey();
-
-        $params['input'] = $input;
-
-        $response = $this->makeRequest(self::QUERY_AUTOCOMPLETE_URL, $params);
-
-        return $this->convertPredictions($response);
     }
 
     private function getRequest($uri, $params){
