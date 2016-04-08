@@ -382,10 +382,17 @@ class PlacesApi
         $place->description = @$result['review_summary'];
 
         $place->open_now_hours = '';
-        $place->opening_hours = '';
+        $place->opening_hours = [];
         $place->open_now = false;
         if (!empty($result['opening_hours'])) {
-            $place->opening_hours = @$result['opening_hours']['weekday_text'];
+//            $place->opening_hours = @$result['opening_hours']['weekday_text'];
+            if(!empty($result['opening_hours']['weekday_text'])){
+                foreach($result['opening_hours']['weekday_text'] as $weekday_text){
+                    list($day, $time) = explode(': ', $weekday_text);
+                    $place->opening_hours[] = compact('day', 'time');
+                }
+            }
+            
             $place->open_now = (bool)$result['opening_hours']['open_now'];
             $week_day = date("w");
             if (!empty($result['opening_hours']['weekday_text'][$week_day])) {

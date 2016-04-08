@@ -21,7 +21,7 @@ class Place {
     public $ratings_count = 0;
     public $open_now = false;
     public $open_now_hours = '';
-    public $opening_hours = '';
+    public $opening_hours = [];
     public $address_components = [];
     public $geometry = [];
     public $icon = '';
